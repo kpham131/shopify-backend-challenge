@@ -16,7 +16,7 @@ const dbURL = process.env.DB_URL
 
 // Connect to Mongo and setup
 //'mongodb://127.0.0.1:27017/shopify-challenge'
-mongoose.connect(dbURL, {
+mongoose.connect('mongodb://127.0.0.1:27017/shopify-challenge', {
     useNewUrlParser: true,
 });
 
@@ -76,7 +76,7 @@ app.get('/items/new', (req, res) => {
 app.post('/items', validateItem ,catchError(async (req, res) => {
     const item = new Item(req.body.item);
     item.status = 'active';
-
+    
     // check if item is already existed
     let findItems = await Item.find({name: item.name})
     findItems = findItems.filter(findItem => findItem.status==='active');
@@ -92,10 +92,6 @@ app.post('/items', validateItem ,catchError(async (req, res) => {
 
 // ----------- Delete -----------
 // only soft delete in case admin wants to traceback data
-app.delete('/items/:id', async (req, res) => {
-    await Item.findByIdAndUpdate(req.params.id, { status: 'deleted'});
-    res.redirect('/items');
-})
 // multiple delete
 app.get('/items/multipleDelete', async (req, res) => {
     let items = await Item.find({});
@@ -103,10 +99,18 @@ app.get('/items/multipleDelete', async (req, res) => {
     res.render('items/multipleDelete', { items })
 });
 app.delete('/items/multipleDelete', async (req, res) => {
+    console.log("Here")
     const {deleteIds} = req.body;
     for(let id of deleteIds){
         await Item.findByIdAndUpdate(id, { status: 'deleted'});
     }
+    res.redirect('/items');
+})
+
+
+app.delete('/items/:id', async (req, res) => {
+    console.log("asjdalskdlkjsdlak")
+    await Item.findByIdAndUpdate(req.params.id, { status: 'deleted'});
     res.redirect('/items');
 })
 
