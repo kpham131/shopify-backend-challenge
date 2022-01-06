@@ -9,9 +9,21 @@
 <body>
     <h1>List of all Items</h1>
     <a href="/items/new"><h2 style="display: inline;">Create new Item </h2></a>&emsp;&emsp;
-    <a href="/items/multipleDelete"><h2 style="display: inline;">Delete</h2></a>
-    <% for (let item of items){%>
+    <a href="/items/multipleDelete"><h2 style="display: inline;">Delete</h2></a>&emsp;&emsp;
+    <a href="/items/tocsv"><h2 style="display: inline;">Export to CSV file</h2></a>
+    <p>---------------------------------------------------------</p>
+    <% for (let item of result.model){%>
         <li><a href="/items/<%= item._id %>"><%= item.name %></a></li>
     <% }%>
+    <br>
 </body>
+<footer>
+    <% if (result.previous){%>
+        <a href="/items?page=<%= result.previous.page %> ">Previous Page</a>&emsp;&emsp;
+    <% }%>
+    <% if (result.next){%>
+        <a href="/items?page=<%= result.next.page %> ">Next Page</a>
+    <% }%>
+    
+</footer>
 </html>

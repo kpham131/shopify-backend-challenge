@@ -3,6 +3,10 @@ const path = require('path');
 const mongoose = require('mongoose');
 const methodOverride = require('method-override');
 const Item = require('./models/item');
+const json2csv = require('json2csv').parse
+const FileSystem = require("fs");
+const e = require('express');
+
 
 // Connect to Mongo and setup
 mongoose.connect('mongodb://127.0.0.1:27017/shopify-challenge', {
@@ -34,10 +38,12 @@ app.get('/', (req, res) => {
 });
 
 // ----------- Get all -----------
-app.get('/items', async (req, res) => {
-    let items = await Item.find({});
-    items = items.filter(item => item.status==='active');
-    res.render('items/index', { items })
+app.get('/items', paginate(Item), async (req, res) => {
+    // let items = await Item.find({});
+    // items = items.filter(item => item.status==='active');
+    const result = res.paginatedResult;
+    console.log(result)
+    res.render('items/index', { result })
 });
 // paging
 
@@ -84,6 +90,22 @@ app.delete('/items/multipleDelete', async (req, res) => {
     res.redirect('/items');
 })
 
+// ----------- To csv -----------
+app.get('/items/tocsv', async (req, res) => {
+    let items = await Item.find({});
+    items = items.filter(item => item.status==='active');
+    try{
+        const csv = json2csv(items, {fields: ["name", "quantity"]});
+        res.attachment('allItems.csv');
+        res.status(200).send(csv)
+    }
+    catch (error) {
+        console.log('error:', error.message)
+        res.status(500).send(error.message)
+    } 
+});
+
+
 // ----------- Show -----------
 app.get('/items/:id', async (req, res,) => {
     const item = await Item.findById(req.params.id)
@@ -109,7 +131,7 @@ app.put('/items/:id', async (req, res) => {
     // check if new name is already existed (only check of active items)
     let findItems = await Item.find({name: req.body.item.name})
     findItems = findItems.filter(findItem => findItem.status==='active');
-    if(findItems.length>0){
+    if(findItems.length>0 && findItems[0]._id.toString()!==id){
         res.render('items/existedItem');
     }
     else{
@@ -118,7 +140,46 @@ app.put('/items/:id', async (req, res) => {
     }
 });
 
-
+// paging from backend
+function paginate(model) {
+    return async (req, res, next) => {
+        let page =0
+        if(!req.query.page){
+            page = 1;
+        }
+        else{
+            page = parseInt(req.query.page)
+        }
+      const limit = 10
+  
+      const start = (page - 1) * limit
+      const end= page * limit
+      console.log("end: "+ end)
+      console.log('countDoc'+ await model.countDocuments({status: 'active'}).exec())
+  
+      const result = {}
+  
+      if (end < await model.countDocuments().exec()) {
+          console.log("added")
+        result.next = {
+          page: page + 1,
+        }
+      }
+      
+      if (start > 0) {
+        result.previous = {
+          page: page - 1,
+        }
+      }
+      try {
+        result.model = await model.find({status: 'active'}).limit(limit).skip(start).exec()
+        res.paginatedResult = result
+        next()
+      } catch (e) {
+        res.status(500).json({ message: e.message })
+      }
+    }
+  }
 
 
 

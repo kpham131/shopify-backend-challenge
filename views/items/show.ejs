@@ -9,15 +9,13 @@
 <body>
     <h1>Name of the item: <%= item.name %></h1>
     <h2>Quantity: <%= item.quantity %></h2>
-    <p> <a href="/items/<%=item._id%>/edit">Edit Item</a>
-    </p>
-    <p>
-    <form action="/items/<%=item._id%>?_method=DELETE" method="POST">
-        <button>Delete Item</button>
-    </form>
-    </p>
-    <footer>
-        <a href="/items">All Items</a>
-    </footer>
+    <button onclick="window.location.href= '/items/<%=item._id%>/edit' " style="display: inline;">Edit Item</button>
+
+        <form action="/items/<%=item._id%>?_method=DELETE" method="POST" style="display: inline;">
+            <button>Delete Item</button>
+        </form>
+
+    
+    <button onclick="window.location.href= '/items' ">All Items</button>
 </body>
 </html>
