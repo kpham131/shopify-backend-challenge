@@ -15,7 +15,7 @@ module.exports = function paginate(model) {
     
         const result = {}
   
-        if (end < await model.countDocuments().exec()) {
+        if (end < await model.countDocuments({status: 'active'}).exec()) {
             result.next = {
             page: page + 1,
             }

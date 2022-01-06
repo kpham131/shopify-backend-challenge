@@ -30,7 +30,6 @@ db.once("open", ()=>{
 const app = express();
 
 
-
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'))
 
@@ -75,6 +74,7 @@ app.get('/items/new', (req, res) => {
 
 app.post('/items', validateItem ,catchError(async (req, res) => {
     const item = new Item(req.body.item);
+    item.name = item.name.toLowerCase();
     item.status = 'active';
     
     // check if item is already existed
@@ -142,6 +142,7 @@ app.get('/items/:id', async (req, res,) => {
 // Edit form
 app.get('/items/:id/edit', async (req, res) => {
     const item = await Item.findById(req.params.id)
+    item.name = item.name.toLowerCase();
     if(item.status === 'deleted'){
         return res.render('notFound');
     }
@@ -159,6 +160,7 @@ app.put('/items/:id', async (req, res) => {
     }
     else{
         const item = await Item.findByIdAndUpdate(id, { ...req.body.item });
+        item.name = item.name.toLowerCase();
         res.redirect(`/items/${item._id}`)
     }
 });
