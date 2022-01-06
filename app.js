@@ -13,7 +13,7 @@ const ExpressError = require('./ExpressError');
 const Joi = require('joi');
 const paginate = require('./paginate')
 const dbURL = process.env.DB_URL
-
+console.log(dbURL)
 
 // Connect to Mongo and setup
 //'mongodb://127.0.0.1:27017/shopify-challenge'
