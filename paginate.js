@@ -1,4 +1,3 @@
-
 // paging from backend
 module.exports = function paginate(model) {
     return async (req, res, next) => {
@@ -17,7 +16,6 @@ module.exports = function paginate(model) {
         const result = {}
   
         if (end < await model.countDocuments().exec()) {
-            console.log("added")
             result.next = {
             page: page + 1,
             }

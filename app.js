@@ -1,3 +1,7 @@
+if(process.env.NODE_ENV !=="production"){
+    require('dotenv').config();
+}
+
 const express = require('express');
 const path = require('path');
 const mongoose = require('mongoose');
@@ -8,12 +12,14 @@ const {itemSchema} = require('./validateSchemas.js')
 const ExpressError = require('./ExpressError');
 const Joi = require('joi');
 const paginate = require('./paginate')
+const dbURL = process.env.DB_URL
 
 
 // Connect to Mongo and setup
-mongoose.connect('mongodb://127.0.0.1:27017/shopify-challenge', {
+//'mongodb://127.0.0.1:27017/shopify-challenge'
+mongoose.connect(dbURL, {
     useNewUrlParser: true,
-    // useCreateIndex: true,
+    // useCreateIndex: true, 
     // useUnifiedTopology: true,
     // useFindAndModify: false
 });
