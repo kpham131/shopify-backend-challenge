@@ -4,8 +4,10 @@ const mongoose = require('mongoose');
 const methodOverride = require('method-override');
 const Item = require('./models/item');
 const json2csv = require('json2csv').parse
-const FileSystem = require("fs");
-const e = require('express');
+const {itemSchema} = require('./validateSchemas.js')
+const ExpressError = require('./ExpressError');
+const Joi = require('joi');
+const paginate = require('./paginate')
 
 
 // Connect to Mongo and setup
@@ -26,6 +28,7 @@ db.once("open", ()=>{
 const app = express();
 
 
+
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'))
 
@@ -33,16 +36,31 @@ app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride('_method'));
 
 
+
+const validateItem = (req, res, next)=>{
+    const {error} = itemSchema.validate(req.body);
+    if(error){
+        const msg = error.details.map(el => el.message).join(',')
+        throw new ExpressError(msg, 400)
+    }
+    else{
+        next();
+    }
+}
+
+const catchError = (func)=>{
+    return (req, res, next)=>{
+        func(req,res,next).catch(next);
+    }
+}
+
 app.get('/', (req, res) => {
     res.render('home')
 });
 
 // ----------- Get all -----------
 app.get('/items', paginate(Item), async (req, res) => {
-    // let items = await Item.find({});
-    // items = items.filter(item => item.status==='active');
     const result = res.paginatedResult;
-    console.log(result)
     res.render('items/index', { result })
 });
 // paging
@@ -53,7 +71,7 @@ app.get('/items/new', (req, res) => {
     res.render('items/new');
 })
 
-app.post('/items', async (req, res) => {
+app.post('/items', validateItem ,catchError(async (req, res) => {
     const item = new Item(req.body.item);
     item.status = 'active';
 
@@ -68,7 +86,7 @@ app.post('/items', async (req, res) => {
         await item.save();
     }
     res.redirect(`/items/${item._id}`)
-})
+}))
 
 // ----------- Delete -----------
 // only soft delete in case admin wants to traceback data
@@ -140,48 +158,14 @@ app.put('/items/:id', async (req, res) => {
     }
 });
 
-// paging from backend
-function paginate(model) {
-    return async (req, res, next) => {
-        let page =0
-        if(!req.query.page){
-            page = 1;
-        }
-        else{
-            page = parseInt(req.query.page)
-        }
-      const limit = 10
-  
-      const start = (page - 1) * limit
-      const end= page * limit
-      console.log("end: "+ end)
-      console.log('countDoc'+ await model.countDocuments({status: 'active'}).exec())
-  
-      const result = {}
-  
-      if (end < await model.countDocuments().exec()) {
-          console.log("added")
-        result.next = {
-          page: page + 1,
-        }
-      }
-      
-      if (start > 0) {
-        result.previous = {
-          page: page - 1,
-        }
-      }
-      try {
-        result.model = await model.find({status: 'active'}).limit(limit).skip(start).exec()
-        res.paginatedResult = result
-        next()
-      } catch (e) {
-        res.status(500).json({ message: e.message })
-      }
-    }
-  }
 
 
+// Error handler
+app.use((err, req, res, next)=>{
+    const {statusCode = 500} = err;
+    if(!err.message)  err.message='Something went wrong!'
+    res.status(statusCode).render('error', {err});
+})
 
 
 app.listen(3000, () => {
